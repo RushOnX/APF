@@ -12,5 +12,9 @@ window.APF_CONFIG = {
   // servir sans connaître ce mot de passe (voir l'onglet "Générer les identifiants"
   // dans l'espace admin). Tant que ce champ est `null`, l'espace admin est en lecture
   // seule et affiche les instructions de configuration initiale.
-  encryptedToken: null,
+  encryptedToken: {
+    salt: "k1wHHhB6dSEYV31REq9P2Q==",
+    iv: "KiWoR13kqU2Ex2rm",
+    cipher: "jMApjXMfjH15IUHeyOQKZhhYuxrTutx+qF/AT9J2Gi6WpcacPhZahBEGS3S8hrV3pU6cMvPa7gOfvk5d2rVDYF1VAWw9gjfXqA5uIdtsUaUGzMP0O+bQRHw8rIq6b3DbLKfaPPLTZ8gu5QjkdQ==",
+  },
 };
