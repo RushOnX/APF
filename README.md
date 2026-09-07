@@ -2,7 +2,7 @@
 
 Un site statique (hébergeable gratuitement sur **GitHub Pages**) qui regroupe toutes les ressources numériques (jeux, outils pédagogiques, clavier/souris, cybersécurité, accessibilité, réseaux sociaux...) classées par catégories, avec recherche et aperçu de chaque lien.
 
-Un **espace admin** (`admin.html`), protégé par un simple mot de passe partagé, permet à toutes les personnes de confiance à qui vous le donnez d'ajouter/modifier/supprimer des catégories et des ressources directement depuis le navigateur : chaque enregistrement crée un commit sur GitHub, donc **tout le monde qui visite le site voit la même version à jour**, sans base de données ni serveur à gérer.
+Toutes les personnes de confiance à qui vous donnez le **mot de passe éditeur** peuvent ajouter/modifier/supprimer des catégories et des ressources **directement sur la page principale** (bouton "🔒 Se connecter") : chaque publication crée un commit sur GitHub, donc **tout le monde qui visite le site voit la même version à jour**, sans base de données ni serveur à gérer.
 
 ## 1. Mettre le site en ligne avec GitHub Pages
 
@@ -29,22 +29,24 @@ L'espace admin est protégé par un **mot de passe éditeur simple** (ex : `APF2
 
 > ⚠️ Ce mot de passe protège contre les visiteurs occasionnels, mais n'est pas un secret de qualité bancaire (le blob chiffré, public, pourrait théoriquement être attaqué hors-ligne si le mot de passe est très faible). Pour un usage entre personnes de confiance, c'est largement suffisant — évitez juste un mot de passe trop évident, et régénérez le token/mot de passe si une personne qui le connaissait ne doit plus avoir accès.
 
-## 3. Utiliser l'espace admin au quotidien
+## 3. Ajouter/modifier des ressources au quotidien
 
-1. Ouvrez `admin.html` (lien "⚙️ Espace admin" en haut du site) et connectez-vous avec le mot de passe éditeur.
-2. Ajoutez une catégorie (icône + nom), puis ajoutez des ressources : collez le lien, cliquez sur **🔍 Récupérer l'aperçu** (récupère automatiquement titre/description/image via une API publique de prévisualisation), ajustez si besoin, choisissez la catégorie, validez.
-3. Une fois vos modifications faites, cliquez sur **Publier sur GitHub** (bandeau orange en bas) : cela crée un commit qui met à jour `data/data.json`. Le site public se met à jour pour tout le monde en quelques secondes.
+Tout se passe sur `index.html`, la page publique :
 
-Sans connexion, l'espace admin affiche uniquement l'écran de mot de passe — la consultation des ressources se fait normalement depuis la page principale (`index.html`), accessible à tous sans rien à saisir.
+1. Cliquez sur **🔒 Se connecter** (en haut à droite) et entrez le mot de passe éditeur.
+2. Une fois connecté : chaque catégorie affiche une tuile **"+ Ajouter une ressource"** à la fin de sa grille, et chaque carte affiche des icônes ✏️ (modifier) / 🗑️ (supprimer) au survol. Un bouton **"+ Catégorie"** apparaît aussi dans la barre de filtres, et chaque titre de catégorie a ses propres icônes modifier/supprimer.
+3. Dans le formulaire d'ajout d'une ressource : collez le lien, cliquez sur **🔍 Aperçu** (récupère automatiquement titre/description/image via une API publique de prévisualisation), ajustez si besoin, choisissez la catégorie, validez.
+4. Une fois vos modifications faites, cliquez sur **Publier** (bandeau en bas de l'écran) : cela crée un commit qui met à jour `data/data.json`. Le site se met à jour pour tout le monde en quelques secondes.
+
+Sans connexion, la page reste en lecture seule et consultable par tous, sans rien à saisir.
 
 ## 4. Structure du projet
 
 ```
-index.html          → page publique (catégories, recherche, cartes avec aperçu)
-admin.html           → espace d'administration (connexion, ajout/modif/suppression, publication GitHub)
+index.html          → page publique + édition directe une fois connecté (modales, catégories, recherche)
+admin.html           → configuration technique unique (génération des identifiants chiffrés)
 assets/style.css      → styles partagés
-assets/app.js         → logique de la page publique
-assets/admin.js       → logique de l'espace admin (login, appels API GitHub, microlink.io)
+assets/app.js         → logique complète de la page principale (affichage, login, édition, publication)
 assets/crypto.js       → chiffrement/déchiffrement du token GitHub avec le mot de passe éditeur
 assets/config.js      → dépôt/branche/chemin par défaut + token GitHub chiffré
 data/data.json        → toutes les catégories et ressources (source de vérité, synchronisée pour tous)
@@ -75,4 +77,4 @@ Certaines ressources de la liste fournie n'avaient pas de lien exploitable au mo
 - Optery
 - Webi'Num #4 — Réseaux sociaux, l'usage des jeunes (déjà présente dans le site, catégorie "Cybersécurité & Vie privée", mais **sans lien** — à compléter)
 
-Une fois le lien collé dans l'espace admin, cliquez sur **🔍 Récupérer l'aperçu** pour générer automatiquement l'image/description, puis **Publier sur GitHub**.
+Une fois le lien collé dans le formulaire, cliquez sur **🔍 Aperçu** pour générer automatiquement l'image/description, puis **Publier**.
