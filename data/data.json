@@ -1,0 +1,143 @@
+{
+  "version": 1,
+  "updatedAt": "2026-09-07T00:00:00.000Z",
+  "categories": [
+    { "id": "jeux", "name": "Jeux de sensibilisation", "icon": "🎮" },
+    { "id": "clavier-souris", "name": "Clavier & Souris", "icon": "⌨️" },
+    { "id": "cybersecurite", "name": "Cybersécurité & Vie privée", "icon": "🔒" },
+    { "id": "intelligence-artificielle", "name": "Intelligence Artificielle", "icon": "🤖" },
+    { "id": "reseaux-sociaux", "name": "Réseaux sociaux", "icon": "📱" },
+    { "id": "outils-pedagogiques", "name": "Outils pédagogiques", "icon": "🎓" },
+    { "id": "accessibilite", "name": "Accessibilité & Handicap", "icon": "♿" },
+    { "id": "seniors", "name": "Seniors", "icon": "👴" },
+    { "id": "autres", "name": "Autres ressources", "icon": "📎" }
+  ],
+  "resources": [
+    {
+      "id": "ahsocial",
+      "title": "@h social",
+      "description": "Jeu de prévention sur les réseaux sociaux.",
+      "url": "https://ahsocial.com/index.html",
+      "categoryId": "jeux",
+      "image": "",
+      "addedAt": "2026-09-07T00:00:00.000Z"
+    },
+    {
+      "id": "aie-aie-ia",
+      "title": "Aïe Aïe iA !",
+      "description": "Le jeu pour démystifier l'intelligence artificielle. Enquête ludo-pédagogique au sein d'une entreprise fictive. (Les Bases du numérique d'intérêt général)",
+      "url": "https://lesbases.anct.gouv.fr/ressources/aie-aie-ia-le-jeu-pour-demystifier-l-intelligence-artificielle",
+      "categoryId": "jeux",
+      "image": "",
+      "addedAt": "2026-09-07T00:00:00.000Z"
+    },
+    {
+      "id": "vinz-et-lou",
+      "title": "Vinz et Lou",
+      "description": "Aborder les enjeux de société avec les 7-12 ans : parcours guidés, vidéos et activités interactives sur le thème internet.",
+      "url": "https://www.vinzetlou.net/fr/ressources/filter/theme/internet/5",
+      "categoryId": "jeux",
+      "image": "",
+      "addedAt": "2026-09-07T00:00:00.000Z"
+    },
+    {
+      "id": "playcurious",
+      "title": "PlayCurious Games",
+      "description": "Jeux de sensibilisation numérique.",
+      "url": "https://playcurious.games",
+      "categoryId": "jeux",
+      "image": "",
+      "addedAt": "2026-09-07T00:00:00.000Z"
+    },
+    {
+      "id": "clavier-digital4better",
+      "title": "Clavier - Digital4Better",
+      "description": "Exercice interactif pour s'entraîner au clavier.",
+      "url": "https://digital4better.github.io/clavier/#/",
+      "categoryId": "clavier-souris",
+      "image": "",
+      "addedAt": "2026-09-07T00:00:00.000Z"
+    },
+    {
+      "id": "edclub",
+      "title": "Edclub - Expédition Dactylo",
+      "description": "Apprendre à taper au clavier de façon ludique.",
+      "url": "https://www.edclub.com/library/expedition-dactylo",
+      "categoryId": "clavier-souris",
+      "image": "",
+      "addedAt": "2026-09-07T00:00:00.000Z"
+    },
+    {
+      "id": "jeux-clavier-vercel",
+      "title": "Jeux clavier",
+      "description": "Exercices ludiques clavier / souris.",
+      "url": "https://jeux-clavier.vercel.app/",
+      "categoryId": "clavier-souris",
+      "image": "",
+      "addedAt": "2026-09-07T00:00:00.000Z"
+    },
+    {
+      "id": "taptouche",
+      "title": "Tap'Touche - Test de vitesse",
+      "description": "Mesurez votre vitesse et votre précision grâce à un test de dactylographie gratuit.",
+      "url": "https://www.taptouche.com/fr/test-de-vitesse",
+      "categoryId": "clavier-souris",
+      "image": "",
+      "addedAt": "2026-09-07T00:00:00.000Z"
+    },
+    {
+      "id": "tiktok-apf",
+      "title": "TikTok - APF France Handicap Aisne",
+      "description": "Compte TikTok officiel APF France Handicap Aisne.",
+      "url": "https://www.tiktok.com/@apffrancehandicapaisne",
+      "categoryId": "reseaux-sociaux",
+      "image": "",
+      "addedAt": "2026-09-07T00:00:00.000Z"
+    },
+    {
+      "id": "ladigitale",
+      "title": "La Digitale",
+      "description": "Éditeur d'outils numériques libres et responsables pour l'éducation (créer des documents, quiz, cours interactifs...).",
+      "url": "https://ladigitale.dev/",
+      "categoryId": "outils-pedagogiques",
+      "image": "",
+      "addedAt": "2026-09-07T00:00:00.000Z"
+    },
+    {
+      "id": "memoire-senior",
+      "title": "Mémoire et Senior",
+      "description": "Exercices en ligne pour faire travailler la mémoire, adaptés aux seniors.",
+      "url": "https://memoireetsenior.fr/",
+      "categoryId": "seniors",
+      "image": "",
+      "addedAt": "2026-09-07T00:00:00.000Z"
+    },
+    {
+      "id": "tlab",
+      "title": "TLAb - Tableau de communication",
+      "description": "Créateur de tableau de conversation (CAA - Communication Alternative et Améliorée).",
+      "url": "https://techlab-handicap.org/apps/tlab/",
+      "categoryId": "accessibilite",
+      "image": "",
+      "addedAt": "2026-09-07T00:00:00.000Z"
+    },
+    {
+      "id": "webinum-4",
+      "title": "Webi'Num #4 – Réseaux sociaux, l'usage des jeunes",
+      "description": "Ressource des centres sociaux en Hauts-de-France : cybersécurité enfants / jeu des 7 familles sur les réseaux sociaux. Lien à ajouter.",
+      "url": "",
+      "categoryId": "cybersecurite",
+      "image": "",
+      "addedAt": "2026-09-07T00:00:00.000Z"
+    },
+    {
+      "id": "limbo-annuaire",
+      "title": "Limbo - Mon annuaire du web",
+      "description": "Ressource proposée par l'annuaire du web.",
+      "url": "https://mon-annuaire-du-web.fr/limbo/",
+      "categoryId": "autres",
+      "image": "",
+      "addedAt": "2026-09-07T00:00:00.000Z"
+    }
+  ]
+}

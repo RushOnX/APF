@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Espace admin - Ressources numériques</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚙️</text></svg>" />
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-top">
+        <div class="brand">
+          <span class="logo">⚙️</span>
+          <div>
+            <h1>Espace admin</h1>
+            <p>Ajoutez, modifiez ou supprimez des catégories et des ressources.</p>
+          </div>
+        </div>
+        <a class="admin-link" href="index.html">← Retour au site</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="admin-wrap">
+    <div class="top-actions">
+      <span class="badge-locked" id="repoBadge">📦 dépôt : chargement…</span>
+      <button class="btn btn-ghost" id="openSettingsBtn">🔧 Paramètres du dépôt</button>
+    </div>
+
+    <!-- Settings -->
+    <div class="panel" id="settingsPanel" style="display:none;">
+      <h2>Paramètres du dépôt GitHub</h2>
+      <div class="row">
+        <div class="field">
+          <label>Propriétaire (owner)</label>
+          <input id="cfgOwner" type="text" placeholder="ex : RushOnX" />
+        </div>
+        <div class="field">
+          <label>Dépôt (repo)</label>
+          <input id="cfgRepo" type="text" placeholder="ex : APF" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Branche</label>
+          <input id="cfgBranch" type="text" placeholder="main" />
+        </div>
+        <div class="field">
+          <label>Chemin du fichier de données</label>
+          <input id="cfgPath" type="text" placeholder="data/data.json" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Token GitHub (accès en écriture)</label>
+        <input id="cfgToken" type="password" placeholder="github_pat_..." autocomplete="off" />
+        <small>
+          Créez un <strong>fine-grained personal access token</strong> sur GitHub, limité à ce dépôt, avec la permission
+          <strong>Contents: Read and write</strong>. Le token est stocké uniquement dans votre navigateur (localStorage), jamais envoyé ailleurs qu'à l'API GitHub.
+          Ne le partagez pas.
+        </small>
+      </div>
+      <button class="btn btn-primary" id="saveSettingsBtn">Enregistrer</button>
+      <button class="btn btn-ghost" id="cancelSettingsBtn">Fermer</button>
+    </div>
+
+    <div class="status-msg" id="loadStatus"></div>
+
+    <!-- Categories -->
+    <div class="panel">
+      <h2>Catégories</h2>
+      <div id="categoryList"></div>
+      <hr style="border:none;border-top:1px solid var(--border);margin:16px 0;" />
+      <h3 id="catFormTitle">Ajouter une catégorie</h3>
+      <form id="catForm">
+        <div class="row">
+          <div class="field" style="max-width:80px;">
+            <label>Icône</label>
+            <input id="catIcon" type="text" placeholder="🎮" maxlength="4" />
+          </div>
+          <div class="field">
+            <label>Nom de la catégorie</label>
+            <input id="catName" type="text" placeholder="ex : Jeux de sensibilisation" required />
+          </div>
+        </div>
+        <button class="btn btn-primary" type="submit" id="catSubmitBtn">Ajouter</button>
+        <button class="btn btn-ghost" type="button" id="catCancelBtn" style="display:none;">Annuler</button>
+      </form>
+    </div>
+
+    <!-- Resources -->
+    <div class="panel">
+      <h2>Ressources</h2>
+      <div class="field">
+        <input id="resSearch" type="text" placeholder="Rechercher dans la liste..." />
+      </div>
+      <div id="resourceList"></div>
+      <hr style="border:none;border-top:1px solid var(--border);margin:16px 0;" />
+      <h3 id="resFormTitle">Ajouter une ressource</h3>
+      <form id="resForm">
+        <div class="field">
+          <label>Lien (URL)</label>
+          <div class="row" style="align-items:flex-start;">
+            <input id="resUrl" type="url" placeholder="https://..." style="flex:1;" />
+            <button class="btn btn-secondary" type="button" id="fetchPreviewBtn">🔍 Récupérer l'aperçu</button>
+          </div>
+          <small>Optionnel si vous n'avez pas encore le lien — la ressource sera marquée "lien à ajouter".</small>
+        </div>
+        <div class="status-msg" id="previewStatus"></div>
+        <div class="preview-box" id="previewBox" style="display:none;">
+          <img id="previewImg" src="" alt="" />
+          <div class="pb-text">
+            <div class="t" id="previewTitle"></div>
+            <div class="d" id="previewDesc"></div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Titre</label>
+          <input id="resTitle" type="text" placeholder="Nom de la ressource" required />
+        </div>
+        <div class="field">
+          <label>Description</label>
+          <textarea id="resDescription" placeholder="Courte description"></textarea>
+        </div>
+        <div class="field">
+          <label>Catégorie</label>
+          <select id="resCategory"></select>
+        </div>
+        <button class="btn btn-primary" type="submit" id="resSubmitBtn">Ajouter</button>
+        <button class="btn btn-ghost" type="button" id="resCancelBtn" style="display:none;">Annuler</button>
+      </form>
+    </div>
+  </main>
+
+  <div class="panel" id="saveBar" style="display:none;position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:20;max-width:560px;width:calc(100% - 32px);box-shadow:0 12px 32px rgba(0,0,0,0.18);align-items:center;justify-content:space-between;gap:12px;">
+    <span style="font-size:13.5px;">🟠 Modifications non publiées</span>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-ghost" id="discardBtn">Annuler</button>
+      <button class="btn btn-primary" id="saveBtn">Publier sur GitHub</button>
+    </div>
+  </div>
+  <div class="status-msg" id="saveStatus" style="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:20;max-width:560px;width:calc(100% - 32px);"></div>
+
+  <script src="assets/config.js"></script>
+  <script src="assets/admin.js"></script>
+</body>
+</html>
