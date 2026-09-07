@@ -7,12 +7,12 @@ Un **espace admin** (`admin.html`), protégé par un simple mot de passe partag�
 ## 1. Mettre le site en ligne avec GitHub Pages
 
 1. Poussez ce dépôt sur GitHub (déjà fait si vous lisez ce fichier depuis GitHub 🙂).
-2. Allez dans **Settings → Pages** du dépôt.
+2. Allez dans **Settings → Pages** du dépôt `RushOnX/APF`.
 3. Dans **Build and deployment → Source**, choisissez **Deploy from a branch**.
-4. Sélectionnez la branche à publier (par ex. `main`) et le dossier **`/ (root)`**.
-5. Enregistrez. Au bout de quelques instants, le site est disponible à l'adresse indiquée en haut de la page (du type `https://<utilisateur>.github.io/<depot>/`).
+4. Sélectionnez la branche **`claude/digital-resources-site-rce6ud`** (c'est actuellement la seule branche du dépôt) et le dossier **`/ (root)`**.
+5. Enregistrez. Au bout de quelques instants, le site est disponible à l'adresse indiquée en haut de la page (normalement `https://rushonx.github.io/APF/`).
 
-> Important : si vous publiez depuis une branche différente de `main` (ou un autre dépôt), pensez à mettre à jour `assets/config.js` (`branch`) et les paramètres du dépôt dans l'espace admin, pour que les sauvegardes visent la bonne branche.
+> Vous pouvez renommer cette branche en `main` plus tard si vous préférez (Settings → Branches) — dans ce cas, mettez aussi à jour `branch` dans `assets/config.js` pour que l'espace admin continue de publier au bon endroit.
 
 ## 2. Configuration initiale (à faire une seule fois, par vous)
 

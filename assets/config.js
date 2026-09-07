@@ -4,7 +4,7 @@
 window.APF_CONFIG = {
   owner: "RushOnX",
   repo: "APF",
-  branch: "main",
+  branch: "claude/digital-resources-site-rce6ud",
   dataPath: "data/data.json",
 
   // Le vrai token GitHub (droit d'écriture sur le dépôt) est stocké ICI, chiffré avec
