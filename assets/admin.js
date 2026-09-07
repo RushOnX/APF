@@ -2,10 +2,10 @@
   "use strict";
 
   var LS_CONFIG = "apf_admin_config";
-  var LS_TOKEN = "apf_admin_token";
+  var SS_TOKEN = "apf_admin_session_token";
 
   var cfg = Object.assign({}, window.APF_CONFIG, JSON.parse(localStorage.getItem(LS_CONFIG) || "{}"));
-  var token = localStorage.getItem(LS_TOKEN) || "";
+  var sessionToken = sessionStorage.getItem(SS_TOKEN) || "";
 
   var state = {
     data: { categories: [], resources: [] },
@@ -73,7 +73,7 @@
     var bar = $("saveBar");
     var dirty = isDirty();
     bar.style.display = dirty ? "flex" : "none";
-    $("saveBtn").disabled = !token;
+    $("saveBtn").disabled = !sessionToken;
   }
 
   // ---------- GitHub API ----------
@@ -84,7 +84,7 @@
 
   function ghHeaders(withToken) {
     var h = { Accept: "application/vnd.github+json" };
-    if (withToken && token) h.Authorization = "Bearer " + token;
+    if (withToken && sessionToken) h.Authorization = "Bearer " + sessionToken;
     return h;
   }
 
@@ -120,8 +120,8 @@
 
   function saveData(commitMessage) {
     var el = $("saveStatus");
-    if (!token) {
-      setStatus(el, "err", "Ajoutez un token GitHub (avec droit d'écriture) dans les paramètres avant d'enregistrer.");
+    if (!sessionToken) {
+      setStatus(el, "err", "Connectez-vous avec le mot de passe éditeur avant de publier.");
       return;
     }
     setStatus(el, "info", "Enregistrement sur GitHub…");
@@ -160,21 +160,20 @@
         setStatus(el, "ok", "✅ Modifications enregistrées ! Elles seront visibles pour tout le monde d'ici quelques secondes.");
       })
       .catch(function (err) {
-        setStatus(el, "err", "⚠️ Échec de l'enregistrement : " + err.message);
+        setStatus(el, "err", "⚠️ Échec de l'enregistrement : " + err.message + (/bad credentials|401/i.test(err.message) ? " — le token stocké n'est peut-être plus valide, régénérez les identifiants." : ""));
       })
       .finally(function () {
-        $("saveBtn").disabled = !token;
+        $("saveBtn").disabled = !sessionToken;
       });
   }
 
-  // ---------- Settings ----------
+  // ---------- Settings (owner/repo/branch/path) ----------
 
   function openSettings() {
     $("cfgOwner").value = cfg.owner || "";
     $("cfgRepo").value = cfg.repo || "";
     $("cfgBranch").value = cfg.branch || "main";
     $("cfgPath").value = cfg.dataPath || "data/data.json";
-    $("cfgToken").value = token || "";
     $("settingsPanel").style.display = "block";
   }
   function closeSettings() { $("settingsPanel").style.display = "none"; }
@@ -184,12 +183,100 @@
     cfg.repo = $("cfgRepo").value.trim();
     cfg.branch = $("cfgBranch").value.trim() || "main";
     cfg.dataPath = $("cfgPath").value.trim() || "data/data.json";
-    token = $("cfgToken").value.trim();
-    localStorage.setItem(LS_CONFIG, JSON.stringify(cfg));
-    if (token) localStorage.setItem(LS_TOKEN, token);
-    else localStorage.removeItem(LS_TOKEN);
+    localStorage.setItem(LS_CONFIG, JSON.stringify({
+      owner: cfg.owner, repo: cfg.repo, branch: cfg.branch, dataPath: cfg.dataPath,
+    }));
     closeSettings();
-    loadData();
+    $("repoBadge").textContent = "📦 dépôt : " + cfg.owner + "/" + cfg.repo + " (" + cfg.branch + ")";
+    if (sessionToken) loadData();
+  }
+
+  // ---------- Setup (génération des identifiants chiffrés) ----------
+
+  function toggleSetup(show) {
+    $("setupPanel").style.display = show ? "block" : "none";
+  }
+
+  function generateCredentials() {
+    var token = $("setupToken").value.trim();
+    var password = $("setupPassword").value.trim();
+    var el = $("setupStatus");
+    if (!token || !password) {
+      setStatus(el, "err", "Renseignez le token et le mot de passe.");
+      return;
+    }
+    setStatus(el, "info", "Chiffrement en cours…");
+    window.APF_CRYPTO.encrypt(token, password)
+      .then(function (blob) {
+        var snippet =
+          "encryptedToken: {\n" +
+          '    salt: "' + blob.salt + '",\n' +
+          '    iv: "' + blob.iv + '",\n' +
+          '    cipher: "' + blob.cipher + '",\n' +
+          "  },";
+        $("setupOutput").value = snippet;
+        $("setupOutputWrap").style.display = "block";
+        clearStatus(el);
+      })
+      .catch(function (err) {
+        setStatus(el, "err", "Erreur de chiffrement : " + err.message);
+      });
+  }
+
+  function copyOutput() {
+    var text = $("setupOutput").value;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(function () {
+      setStatus($("setupStatus"), "ok", "Copié ! Collez ce bloc dans assets/config.js puis commitez/pushez.");
+    }).catch(function () {
+      $("setupOutput").select();
+    });
+  }
+
+  // ---------- Login ----------
+
+  function attemptLogin() {
+    var password = $("loginPassword").value;
+    var el = $("loginStatus");
+    if (!cfg.encryptedToken) {
+      setStatus(el, "err", "Aucun identifiant n'est encore configuré (voir « Générer les identifiants »).");
+      return;
+    }
+    if (!password) return;
+    setStatus(el, "info", "Vérification…");
+    window.APF_CRYPTO.decrypt(cfg.encryptedToken, password)
+      .then(function (token) {
+        sessionToken = token;
+        sessionStorage.setItem(SS_TOKEN, token);
+        clearStatus(el);
+        showLoggedInUI();
+        loadData();
+      })
+      .catch(function () {
+        setStatus(el, "err", "Mot de passe incorrect.");
+      });
+  }
+
+  function logout() {
+    sessionToken = "";
+    sessionStorage.removeItem(SS_TOKEN);
+    showLoggedOutUI();
+  }
+
+  function showLoggedInUI() {
+    $("loginPanel").style.display = "none";
+    $("editorArea").style.display = "block";
+    $("logoutBtn").style.display = "inline-flex";
+  }
+
+  function showLoggedOutUI() {
+    $("editorArea").style.display = "none";
+    $("logoutBtn").style.display = "none";
+    if (cfg.encryptedToken) {
+      $("loginPanel").style.display = "block";
+    } else {
+      toggleSetup(true);
+    }
   }
 
   // ---------- Categories ----------
@@ -428,13 +515,23 @@
     renderCategories();
     renderResources();
     refreshSaveBar();
-    $("repoBadge").textContent = "📦 dépôt : " + cfg.owner + "/" + cfg.repo + " (" + cfg.branch + ")";
   }
 
   document.addEventListener("DOMContentLoaded", function () {
+    $("repoBadge").textContent = "📦 dépôt : " + (cfg.owner || "?") + "/" + (cfg.repo || "?") + " (" + (cfg.branch || "main") + ")";
+
     $("openSettingsBtn").addEventListener("click", openSettings);
     $("cancelSettingsBtn").addEventListener("click", closeSettings);
     $("saveSettingsBtn").addEventListener("click", saveSettings);
+
+    $("openSetupBtn").addEventListener("click", function () { toggleSetup($("setupPanel").style.display !== "block"); });
+    $("hideSetupBtn").addEventListener("click", function () { toggleSetup(false); });
+    $("generateBtn").addEventListener("click", generateCredentials);
+    $("copyOutputBtn").addEventListener("click", copyOutput);
+
+    $("loginBtn").addEventListener("click", attemptLogin);
+    $("loginPassword").addEventListener("keydown", function (e) { if (e.key === "Enter") attemptLogin(); });
+    $("logoutBtn").addEventListener("click", logout);
 
     $("catForm").addEventListener("submit", submitCategoryForm);
     $("catCancelBtn").addEventListener("click", resetCategoryForm);
@@ -452,12 +549,11 @@
       loadData();
     });
 
-    $("repoBadge").textContent = "📦 dépôt : " + (cfg.owner || "?") + "/" + (cfg.repo || "?") + " (" + (cfg.branch || "main") + ")";
-
-    if (!cfg.owner || !cfg.repo) {
-      openSettings();
-    } else {
+    if (sessionToken) {
+      showLoggedInUI();
       loadData();
+    } else {
+      showLoggedOutUI();
     }
   });
 })();

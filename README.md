@@ -2,7 +2,7 @@
 
 Un site statique (hébergeable gratuitement sur **GitHub Pages**) qui regroupe toutes les ressources numériques (jeux, outils pédagogiques, clavier/souris, cybersécurité, accessibilité, réseaux sociaux...) classées par catégories, avec recherche et aperçu de chaque lien.
 
-Un **espace admin** (`admin.html`) permet d'ajouter/modifier/supprimer des catégories et des ressources directement depuis le navigateur : chaque enregistrement crée un commit sur GitHub, donc **tout le monde qui visite le site voit la même version à jour**, sans base de données ni serveur à gérer.
+Un **espace admin** (`admin.html`), protégé par un simple mot de passe partagé, permet à toutes les personnes de confiance à qui vous le donnez d'ajouter/modifier/supprimer des catégories et des ressources directement depuis le navigateur : chaque enregistrement crée un commit sur GitHub, donc **tout le monde qui visite le site voit la même version à jour**, sans base de données ni serveur à gérer.
 
 ## 1. Mettre le site en ligne avec GitHub Pages
 
@@ -14,34 +14,43 @@ Un **espace admin** (`admin.html`) permet d'ajouter/modifier/supprimer des caté
 
 > Important : si vous publiez depuis une branche différente de `main` (ou un autre dépôt), pensez à mettre à jour `assets/config.js` (`branch`) et les paramètres du dépôt dans l'espace admin, pour que les sauvegardes visent la bonne branche.
 
-## 2. Utiliser l'espace admin pour ajouter des ressources
+## 2. Configuration initiale (à faire une seule fois, par vous)
 
-1. Ouvrez `admin.html` (lien "⚙️ Espace admin" en haut du site).
-2. Cliquez sur **🔧 Paramètres du dépôt** et vérifiez `owner` / `repo` / `branche` (déjà pré-remplis avec `RushOnX/APF` / `main`).
-3. Créez un **token GitHub à accès restreint** :
-   - Allez sur GitHub → **Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token**.
+L'espace admin est protégé par un **mot de passe éditeur simple** (ex : `APF2026!`) que vous choisissez et donnez ensuite à qui vous voulez. En coulisses, ce mot de passe déverrouille un vrai token GitHub qui reste **chiffré** dans le code du site (`assets/config.js`) — personne ne peut l'utiliser sans connaître le mot de passe, et ce token n'est jamais transmis nulle part (tout se calcule dans le navigateur).
+
+1. Créez un **token GitHub à accès restreint** :
+   - GitHub → **Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token**.
    - **Repository access** : sélectionnez uniquement ce dépôt.
    - **Permissions → Contents** : `Read and write`.
-   - Générez le token et collez-le dans le champ **Token GitHub** de l'espace admin.
-4. Le token est stocké **uniquement dans votre navigateur** (localStorage), il n'est jamais envoyé ailleurs qu'à l'API GitHub. Ne le partagez pas, et régénérez-le si besoin.
-5. Ajoutez une catégorie (icône + nom), puis ajoutez des ressources : collez le lien, cliquez sur **🔍 Récupérer l'aperçu** (récupère automatiquement titre/description/image via une API publique de prévisualisation), ajustez si besoin, choisissez la catégorie, validez.
-6. Une fois vos modifications faites, cliquez sur **Publier sur GitHub** (bandeau orange en bas) : cela crée un commit qui met à jour `data/data.json`. Le site public se met à jour pour tout le monde en quelques secondes.
+2. Ouvrez `admin.html`, cliquez sur **🛠️ Générer les identifiants**.
+3. Collez le token et choisissez votre mot de passe éditeur, cliquez sur **Générer**.
+4. Copiez le bloc obtenu (`encryptedToken: { salt, iv, cipher }`) et collez-le dans `assets/config.js` à la place de `encryptedToken: null`. Committez et poussez ce fichier.
+5. Donnez le **mot de passe** (pas le token !) aux personnes qui doivent pouvoir modifier le site.
 
-Sans token (ou sans droits d'écriture), l'espace admin reste consultable mais le bouton "Publier" est désactivé — vous pouvez quand même parcourir les catégories/ressources existantes.
+> ⚠️ Ce mot de passe protège contre les visiteurs occasionnels, mais n'est pas un secret de qualité bancaire (le blob chiffré, public, pourrait théoriquement être attaqué hors-ligne si le mot de passe est très faible). Pour un usage entre personnes de confiance, c'est largement suffisant — évitez juste un mot de passe trop évident, et régénérez le token/mot de passe si une personne qui le connaissait ne doit plus avoir accès.
 
-## 3. Structure du projet
+## 3. Utiliser l'espace admin au quotidien
+
+1. Ouvrez `admin.html` (lien "⚙️ Espace admin" en haut du site) et connectez-vous avec le mot de passe éditeur.
+2. Ajoutez une catégorie (icône + nom), puis ajoutez des ressources : collez le lien, cliquez sur **🔍 Récupérer l'aperçu** (récupère automatiquement titre/description/image via une API publique de prévisualisation), ajustez si besoin, choisissez la catégorie, validez.
+3. Une fois vos modifications faites, cliquez sur **Publier sur GitHub** (bandeau orange en bas) : cela crée un commit qui met à jour `data/data.json`. Le site public se met à jour pour tout le monde en quelques secondes.
+
+Sans connexion, l'espace admin affiche uniquement l'écran de mot de passe — la consultation des ressources se fait normalement depuis la page principale (`index.html`), accessible à tous sans rien à saisir.
+
+## 4. Structure du projet
 
 ```
 index.html          → page publique (catégories, recherche, cartes avec aperçu)
-admin.html           → espace d'administration (ajout/modif/suppression, publication GitHub)
+admin.html           → espace d'administration (connexion, ajout/modif/suppression, publication GitHub)
 assets/style.css      → styles partagés
 assets/app.js         → logique de la page publique
-assets/admin.js       → logique de l'espace admin (appels API GitHub + microlink.io)
-assets/config.js      → dépôt/branche/chemin par défaut utilisés par l'admin
+assets/admin.js       → logique de l'espace admin (login, appels API GitHub, microlink.io)
+assets/crypto.js       → chiffrement/déchiffrement du token GitHub avec le mot de passe éditeur
+assets/config.js      → dépôt/branche/chemin par défaut + token GitHub chiffré
 data/data.json        → toutes les catégories et ressources (source de vérité, synchronisée pour tous)
 ```
 
-## 4. Ressources encore à compléter
+## 5. Ressources encore à compléter
 
 Certaines ressources de la liste fournie n'avaient pas de lien exploitable au moment de la création du site (juste un titre, sans URL). Elles ne sont donc pas encore dans `data.json`. Ajoutez-les via l'espace admin dès que vous avez le lien :
 

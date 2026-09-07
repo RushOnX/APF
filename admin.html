@@ -26,10 +26,14 @@
   <main class="admin-wrap">
     <div class="top-actions">
       <span class="badge-locked" id="repoBadge">📦 dépôt : chargement…</span>
-      <button class="btn btn-ghost" id="openSettingsBtn">🔧 Paramètres du dépôt</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-ghost" id="openSettingsBtn">🔧 Paramètres du dépôt</button>
+        <button class="btn btn-ghost" id="openSetupBtn">🛠️ Générer les identifiants</button>
+        <button class="btn btn-ghost" id="logoutBtn" style="display:none;">🔒 Se déconnecter</button>
+      </div>
     </div>
 
-    <!-- Settings -->
+    <!-- Settings (owner only, source de vérité : owner/repo/branch/path) -->
     <div class="panel" id="settingsPanel" style="display:none;">
       <h2>Paramètres du dépôt GitHub</h2>
       <div class="row">
@@ -52,84 +56,125 @@
           <input id="cfgPath" type="text" placeholder="data/data.json" />
         </div>
       </div>
-      <div class="field">
-        <label>Token GitHub (accès en écriture)</label>
-        <input id="cfgToken" type="password" placeholder="github_pat_..." autocomplete="off" />
-        <small>
-          Créez un <strong>fine-grained personal access token</strong> sur GitHub, limité à ce dépôt, avec la permission
-          <strong>Contents: Read and write</strong>. Le token est stocké uniquement dans votre navigateur (localStorage), jamais envoyé ailleurs qu'à l'API GitHub.
-          Ne le partagez pas.
-        </small>
-      </div>
       <button class="btn btn-primary" id="saveSettingsBtn">Enregistrer</button>
       <button class="btn btn-ghost" id="cancelSettingsBtn">Fermer</button>
     </div>
 
-    <div class="status-msg" id="loadStatus"></div>
-
-    <!-- Categories -->
-    <div class="panel">
-      <h2>Catégories</h2>
-      <div id="categoryList"></div>
+    <!-- Setup : proprietaire du site uniquement -->
+    <div class="panel" id="setupPanel" style="display:none;">
+      <h2>🛠️ Configuration initiale (propriétaire du site uniquement)</h2>
+      <p style="font-size:13.5px;color:var(--text-muted);">
+        Aucun identifiant n'est encore configuré. Cette étape se fait <strong>une seule fois</strong>, par la personne qui gère le dépôt GitHub.
+        Le token n'est jamais envoyé nulle part : tout se calcule dans votre navigateur.
+      </p>
+      <ol style="font-size:13.5px;color:var(--text-muted);padding-left:18px;">
+        <li>Créez un <strong>fine-grained personal access token</strong> GitHub, limité à ce dépôt, permission <strong>Contents: Read and write</strong> uniquement.</li>
+        <li>Collez-le ci-dessous avec le mot de passe éditeur que vous voulez donner à vos collaborateurs (ex : <code>APF2026!</code>).</li>
+        <li>Cliquez sur « Générer », copiez le bloc obtenu, et collez-le dans <code>assets/config.js</code> à la place de <code>encryptedToken: null</code>, puis commitez/pushez ce fichier.</li>
+      </ol>
+      <div class="field">
+        <label>Token GitHub (jamais envoyé, reste dans votre navigateur)</label>
+        <input id="setupToken" type="password" placeholder="github_pat_..." autocomplete="off" />
+      </div>
+      <div class="field">
+        <label>Mot de passe éditeur à distribuer</label>
+        <input id="setupPassword" type="text" placeholder="ex : APF2026!" autocomplete="off" />
+      </div>
+      <button class="btn btn-primary" type="button" id="generateBtn">Générer</button>
+      <div class="status-msg" id="setupStatus"></div>
+      <div class="field" id="setupOutputWrap" style="display:none;margin-top:12px;">
+        <label>Bloc à coller dans assets/config.js (remplace <code>encryptedToken: null</code>)</label>
+        <textarea id="setupOutput" rows="6" readonly onclick="this.select()"></textarea>
+        <button class="btn btn-secondary" type="button" id="copyOutputBtn" style="margin-top:8px;">📋 Copier</button>
+      </div>
       <hr style="border:none;border-top:1px solid var(--border);margin:16px 0;" />
-      <h3 id="catFormTitle">Ajouter une catégorie</h3>
-      <form id="catForm">
-        <div class="row">
-          <div class="field" style="max-width:80px;">
-            <label>Icône</label>
-            <input id="catIcon" type="text" placeholder="🎮" maxlength="4" />
-          </div>
-          <div class="field">
-            <label>Nom de la catégorie</label>
-            <input id="catName" type="text" placeholder="ex : Jeux de sensibilisation" required />
-          </div>
-        </div>
-        <button class="btn btn-primary" type="submit" id="catSubmitBtn">Ajouter</button>
-        <button class="btn btn-ghost" type="button" id="catCancelBtn" style="display:none;">Annuler</button>
-      </form>
+      <button class="btn btn-ghost" type="button" id="hideSetupBtn">Masquer ce bloc</button>
     </div>
 
-    <!-- Resources -->
-    <div class="panel">
-      <h2>Ressources</h2>
+    <!-- Login gate -->
+    <div class="panel" id="loginPanel" style="display:none;max-width:420px;margin:40px auto;">
+      <h2>🔒 Connexion éditeur</h2>
+      <p style="font-size:13.5px;color:var(--text-muted);">Entrez le mot de passe qui vous a été communiqué pour pouvoir ajouter, modifier ou supprimer des ressources.</p>
       <div class="field">
-        <input id="resSearch" type="text" placeholder="Rechercher dans la liste..." />
+        <label>Mot de passe</label>
+        <input id="loginPassword" type="password" placeholder="Mot de passe éditeur" />
       </div>
-      <div id="resourceList"></div>
-      <hr style="border:none;border-top:1px solid var(--border);margin:16px 0;" />
-      <h3 id="resFormTitle">Ajouter une ressource</h3>
-      <form id="resForm">
-        <div class="field">
-          <label>Lien (URL)</label>
-          <div class="row" style="align-items:flex-start;">
-            <input id="resUrl" type="url" placeholder="https://..." style="flex:1;" />
-            <button class="btn btn-secondary" type="button" id="fetchPreviewBtn">🔍 Récupérer l'aperçu</button>
+      <button class="btn btn-primary" id="loginBtn">Se connecter</button>
+      <div class="status-msg" id="loginStatus"></div>
+      <p style="font-size:12.5px;color:var(--text-muted);margin-top:14px;">
+        Vous pouvez consulter les ressources sans vous connecter sur la <a href="index.html">page principale</a>.
+        La connexion n'est nécessaire que pour modifier le contenu.
+      </p>
+    </div>
+
+    <div class="status-msg" id="loadStatus"></div>
+
+    <!-- Editing UI : visible uniquement une fois connecte -->
+    <div id="editorArea" style="display:none;">
+      <!-- Categories -->
+      <div class="panel">
+        <h2>Catégories</h2>
+        <div id="categoryList"></div>
+        <hr style="border:none;border-top:1px solid var(--border);margin:16px 0;" />
+        <h3 id="catFormTitle">Ajouter une catégorie</h3>
+        <form id="catForm">
+          <div class="row">
+            <div class="field" style="max-width:80px;">
+              <label>Icône</label>
+              <input id="catIcon" type="text" placeholder="🎮" maxlength="4" />
+            </div>
+            <div class="field">
+              <label>Nom de la catégorie</label>
+              <input id="catName" type="text" placeholder="ex : Jeux de sensibilisation" required />
+            </div>
           </div>
-          <small>Optionnel si vous n'avez pas encore le lien — la ressource sera marquée "lien à ajouter".</small>
+          <button class="btn btn-primary" type="submit" id="catSubmitBtn">Ajouter</button>
+          <button class="btn btn-ghost" type="button" id="catCancelBtn" style="display:none;">Annuler</button>
+        </form>
+      </div>
+
+      <!-- Resources -->
+      <div class="panel">
+        <h2>Ressources</h2>
+        <div class="field">
+          <input id="resSearch" type="text" placeholder="Rechercher dans la liste..." />
         </div>
-        <div class="status-msg" id="previewStatus"></div>
-        <div class="preview-box" id="previewBox" style="display:none;">
-          <img id="previewImg" src="" alt="" />
-          <div class="pb-text">
-            <div class="t" id="previewTitle"></div>
-            <div class="d" id="previewDesc"></div>
+        <div id="resourceList"></div>
+        <hr style="border:none;border-top:1px solid var(--border);margin:16px 0;" />
+        <h3 id="resFormTitle">Ajouter une ressource</h3>
+        <form id="resForm">
+          <div class="field">
+            <label>Lien (URL)</label>
+            <div class="row" style="align-items:flex-start;">
+              <input id="resUrl" type="url" placeholder="https://..." style="flex:1;" />
+              <button class="btn btn-secondary" type="button" id="fetchPreviewBtn">🔍 Récupérer l'aperçu</button>
+            </div>
+            <small>Optionnel si vous n'avez pas encore le lien — la ressource sera marquée "lien à ajouter".</small>
           </div>
-        </div>
-        <div class="field">
-          <label>Titre</label>
-          <input id="resTitle" type="text" placeholder="Nom de la ressource" required />
-        </div>
-        <div class="field">
-          <label>Description</label>
-          <textarea id="resDescription" placeholder="Courte description"></textarea>
-        </div>
-        <div class="field">
-          <label>Catégorie</label>
-          <select id="resCategory"></select>
-        </div>
-        <button class="btn btn-primary" type="submit" id="resSubmitBtn">Ajouter</button>
-        <button class="btn btn-ghost" type="button" id="resCancelBtn" style="display:none;">Annuler</button>
-      </form>
+          <div class="status-msg" id="previewStatus"></div>
+          <div class="preview-box" id="previewBox" style="display:none;">
+            <img id="previewImg" src="" alt="" />
+            <div class="pb-text">
+              <div class="t" id="previewTitle"></div>
+              <div class="d" id="previewDesc"></div>
+            </div>
+          </div>
+          <div class="field">
+            <label>Titre</label>
+            <input id="resTitle" type="text" placeholder="Nom de la ressource" required />
+          </div>
+          <div class="field">
+            <label>Description</label>
+            <textarea id="resDescription" placeholder="Courte description"></textarea>
+          </div>
+          <div class="field">
+            <label>Catégorie</label>
+            <select id="resCategory"></select>
+          </div>
+          <button class="btn btn-primary" type="submit" id="resSubmitBtn">Ajouter</button>
+          <button class="btn btn-ghost" type="button" id="resCancelBtn" style="display:none;">Annuler</button>
+        </form>
+      </div>
     </div>
   </main>
 
@@ -143,6 +188,7 @@
   <div class="status-msg" id="saveStatus" style="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:20;max-width:560px;width:calc(100% - 32px);"></div>
 
   <script src="assets/config.js"></script>
+  <script src="assets/crypto.js"></script>
   <script src="assets/admin.js"></script>
 </body>
 </html>
