@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Espace admin - Ressources numériques</title>
+  <title>Configuration - Ressources numériques</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚙️</text></svg>" />
   <link rel="stylesheet" href="assets/style.css" />
 </head>
@@ -14,61 +14,32 @@
         <div class="brand">
           <span class="logo">⚙️</span>
           <div>
-            <h1>Espace admin</h1>
-            <p>Ajoutez, modifiez ou supprimez des catégories et des ressources.</p>
+            <h1>Configuration</h1>
+            <p>Étape unique, réservée au propriétaire du dépôt GitHub.</p>
           </div>
         </div>
-        <a class="admin-link" href="index.html">← Retour au site</a>
+        <div class="header-actions">
+          <a class="icon-btn" href="index.html">← Retour au site</a>
+        </div>
       </div>
     </div>
   </header>
 
   <main class="admin-wrap">
-    <div class="top-actions">
-      <span class="badge-locked" id="repoBadge">📦 dépôt : chargement…</span>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-ghost" id="openSettingsBtn">🔧 Paramètres du dépôt</button>
-        <button class="btn btn-ghost" id="openSetupBtn">🛠️ Générer les identifiants</button>
-        <button class="btn btn-ghost" id="logoutBtn" style="display:none;">🔒 Se déconnecter</button>
-      </div>
-    </div>
-
-    <!-- Settings (owner only, source de vérité : owner/repo/branch/path) -->
-    <div class="panel" id="settingsPanel" style="display:none;">
-      <h2>Paramètres du dépôt GitHub</h2>
-      <div class="row">
-        <div class="field">
-          <label>Propriétaire (owner)</label>
-          <input id="cfgOwner" type="text" placeholder="ex : RushOnX" />
-        </div>
-        <div class="field">
-          <label>Dépôt (repo)</label>
-          <input id="cfgRepo" type="text" placeholder="ex : APF" />
-        </div>
-      </div>
-      <div class="row">
-        <div class="field">
-          <label>Branche</label>
-          <input id="cfgBranch" type="text" placeholder="main" />
-        </div>
-        <div class="field">
-          <label>Chemin du fichier de données</label>
-          <input id="cfgPath" type="text" placeholder="data/data.json" />
-        </div>
-      </div>
-      <button class="btn btn-primary" id="saveSettingsBtn">Enregistrer</button>
-      <button class="btn btn-ghost" id="cancelSettingsBtn">Fermer</button>
-    </div>
-
-    <!-- Setup : proprietaire du site uniquement -->
-    <div class="panel" id="setupPanel" style="display:none;">
-      <h2>🛠️ Configuration initiale (propriétaire du site uniquement)</h2>
-      <p style="font-size:13.5px;color:var(--text-muted);">
-        Aucun identifiant n'est encore configuré. Cette étape se fait <strong>une seule fois</strong>, par la personne qui gère le dépôt GitHub.
-        Le token n'est jamais envoyé nulle part : tout se calcule dans votre navigateur.
+    <div class="panel">
+      <h2>Comment ça marche</h2>
+      <p>
+        L'ajout, la modification et la suppression des ressources se font désormais <strong>directement sur la page principale</strong>
+        (bouton <strong>🔒 Se connecter</strong> en haut à droite), avec un simple mot de passe que vous choisissez ci-dessous.
+        Cette page sert uniquement, une seule fois, à créer ce mot de passe et à le relier à un vrai token GitHub — qui reste
+        chiffré dans le code du site et n'est jamais transmis nulle part.
       </p>
-      <ol style="font-size:13.5px;color:var(--text-muted);padding-left:18px;">
-        <li>Créez un <strong>fine-grained personal access token</strong> GitHub, limité à ce dépôt, permission <strong>Contents: Read and write</strong> uniquement.</li>
+    </div>
+
+    <div class="panel">
+      <h2>🛠️ Générer les identifiants éditeur</h2>
+      <ol>
+        <li>Créez un <strong>fine-grained personal access token</strong> GitHub, limité à ce dépôt, permission <strong>Contents: Read and write</strong> uniquement (<a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener noreferrer">créer un token</a>).</li>
         <li>Collez-le ci-dessous avec le mot de passe éditeur que vous voulez donner à vos collaborateurs (ex : <code>APF2026!</code>).</li>
         <li>Cliquez sur « Générer », copiez le bloc obtenu, et collez-le dans <code>assets/config.js</code> à la place de <code>encryptedToken: null</code>, puis commitez/pushez ce fichier.</li>
       </ol>
@@ -82,113 +53,74 @@
       </div>
       <button class="btn btn-primary" type="button" id="generateBtn">Générer</button>
       <div class="status-msg" id="setupStatus"></div>
-      <div class="field" id="setupOutputWrap" style="display:none;margin-top:12px;">
+      <div class="field" id="setupOutputWrap" style="display:none;margin-top:14px;">
         <label>Bloc à coller dans assets/config.js (remplace <code>encryptedToken: null</code>)</label>
         <textarea id="setupOutput" rows="6" readonly onclick="this.select()"></textarea>
         <button class="btn btn-secondary" type="button" id="copyOutputBtn" style="margin-top:8px;">📋 Copier</button>
       </div>
-      <hr style="border:none;border-top:1px solid var(--border);margin:16px 0;" />
-      <button class="btn btn-ghost" type="button" id="hideSetupBtn">Masquer ce bloc</button>
     </div>
 
-    <!-- Login gate -->
-    <div class="panel" id="loginPanel" style="display:none;max-width:420px;margin:40px auto;">
-      <h2>🔒 Connexion éditeur</h2>
-      <p style="font-size:13.5px;color:var(--text-muted);">Entrez le mot de passe qui vous a été communiqué pour pouvoir ajouter, modifier ou supprimer des ressources.</p>
-      <div class="field">
-        <label>Mot de passe</label>
-        <input id="loginPassword" type="password" placeholder="Mot de passe éditeur" />
+    <div class="panel">
+      <h2>Paramètres du dépôt</h2>
+      <p>Valeurs déjà pré-remplies dans <code>assets/config.js</code>. À ne modifier que si vous changez de dépôt ou de branche.</p>
+      <div class="row">
+        <div class="field"><label>Propriétaire (owner)</label><input id="cfgOwner" type="text" disabled /></div>
+        <div class="field"><label>Dépôt (repo)</label><input id="cfgRepo" type="text" disabled /></div>
       </div>
-      <button class="btn btn-primary" id="loginBtn">Se connecter</button>
-      <div class="status-msg" id="loginStatus"></div>
-      <p style="font-size:12.5px;color:var(--text-muted);margin-top:14px;">
-        Vous pouvez consulter les ressources sans vous connecter sur la <a href="index.html">page principale</a>.
-        La connexion n'est nécessaire que pour modifier le contenu.
-      </p>
-    </div>
-
-    <div class="status-msg" id="loadStatus"></div>
-
-    <!-- Editing UI : visible uniquement une fois connecte -->
-    <div id="editorArea" style="display:none;">
-      <!-- Categories -->
-      <div class="panel">
-        <h2>Catégories</h2>
-        <div id="categoryList"></div>
-        <hr style="border:none;border-top:1px solid var(--border);margin:16px 0;" />
-        <h3 id="catFormTitle">Ajouter une catégorie</h3>
-        <form id="catForm">
-          <div class="row">
-            <div class="field" style="max-width:80px;">
-              <label>Icône</label>
-              <input id="catIcon" type="text" placeholder="🎮" maxlength="4" />
-            </div>
-            <div class="field">
-              <label>Nom de la catégorie</label>
-              <input id="catName" type="text" placeholder="ex : Jeux de sensibilisation" required />
-            </div>
-          </div>
-          <button class="btn btn-primary" type="submit" id="catSubmitBtn">Ajouter</button>
-          <button class="btn btn-ghost" type="button" id="catCancelBtn" style="display:none;">Annuler</button>
-        </form>
+      <div class="row">
+        <div class="field"><label>Branche</label><input id="cfgBranch" type="text" disabled /></div>
+        <div class="field"><label>Chemin des données</label><input id="cfgPath" type="text" disabled /></div>
       </div>
-
-      <!-- Resources -->
-      <div class="panel">
-        <h2>Ressources</h2>
-        <div class="field">
-          <input id="resSearch" type="text" placeholder="Rechercher dans la liste..." />
-        </div>
-        <div id="resourceList"></div>
-        <hr style="border:none;border-top:1px solid var(--border);margin:16px 0;" />
-        <h3 id="resFormTitle">Ajouter une ressource</h3>
-        <form id="resForm">
-          <div class="field">
-            <label>Lien (URL)</label>
-            <div class="row" style="align-items:flex-start;">
-              <input id="resUrl" type="url" placeholder="https://..." style="flex:1;" />
-              <button class="btn btn-secondary" type="button" id="fetchPreviewBtn">🔍 Récupérer l'aperçu</button>
-            </div>
-            <small>Optionnel si vous n'avez pas encore le lien — la ressource sera marquée "lien à ajouter".</small>
-          </div>
-          <div class="status-msg" id="previewStatus"></div>
-          <div class="preview-box" id="previewBox" style="display:none;">
-            <img id="previewImg" src="" alt="" />
-            <div class="pb-text">
-              <div class="t" id="previewTitle"></div>
-              <div class="d" id="previewDesc"></div>
-            </div>
-          </div>
-          <div class="field">
-            <label>Titre</label>
-            <input id="resTitle" type="text" placeholder="Nom de la ressource" required />
-          </div>
-          <div class="field">
-            <label>Description</label>
-            <textarea id="resDescription" placeholder="Courte description"></textarea>
-          </div>
-          <div class="field">
-            <label>Catégorie</label>
-            <select id="resCategory"></select>
-          </div>
-          <button class="btn btn-primary" type="submit" id="resSubmitBtn">Ajouter</button>
-          <button class="btn btn-ghost" type="button" id="resCancelBtn" style="display:none;">Annuler</button>
-        </form>
-      </div>
+      <small>Pour changer ces valeurs, éditez directement <code>assets/config.js</code> dans le code du site.</small>
     </div>
   </main>
 
-  <div class="panel" id="saveBar" style="display:none;position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:20;max-width:560px;width:calc(100% - 32px);box-shadow:0 12px 32px rgba(0,0,0,0.18);align-items:center;justify-content:space-between;gap:12px;">
-    <span style="font-size:13.5px;">🟠 Modifications non publiées</span>
-    <div style="display:flex;gap:8px;">
-      <button class="btn btn-ghost" id="discardBtn">Annuler</button>
-      <button class="btn btn-primary" id="saveBtn">Publier sur GitHub</button>
-    </div>
-  </div>
-  <div class="status-msg" id="saveStatus" style="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:20;max-width:560px;width:calc(100% - 32px);"></div>
-
   <script src="assets/config.js"></script>
   <script src="assets/crypto.js"></script>
-  <script src="assets/admin.js"></script>
+  <script>
+    (function () {
+      var cfg = window.APF_CONFIG || {};
+      document.getElementById("cfgOwner").value = cfg.owner || "";
+      document.getElementById("cfgRepo").value = cfg.repo || "";
+      document.getElementById("cfgBranch").value = cfg.branch || "";
+      document.getElementById("cfgPath").value = cfg.dataPath || "";
+
+      function setStatus(el, type, msg) {
+        el.className = "status-msg show " + type;
+        el.textContent = msg;
+      }
+
+      document.getElementById("generateBtn").addEventListener("click", function () {
+        var token = document.getElementById("setupToken").value.trim();
+        var password = document.getElementById("setupPassword").value.trim();
+        var el = document.getElementById("setupStatus");
+        if (!token || !password) { setStatus(el, "err", "Renseignez le token et le mot de passe."); return; }
+        setStatus(el, "info", "Chiffrement en cours…");
+        window.APF_CRYPTO.encrypt(token, password).then(function (blob) {
+          var snippet =
+            "encryptedToken: {\n" +
+            '    salt: "' + blob.salt + '",\n' +
+            '    iv: "' + blob.iv + '",\n' +
+            '    cipher: "' + blob.cipher + '",\n' +
+            "  },";
+          document.getElementById("setupOutput").value = snippet;
+          document.getElementById("setupOutputWrap").style.display = "block";
+          el.className = "status-msg";
+        }).catch(function (err) {
+          setStatus(el, "err", "Erreur de chiffrement : " + err.message);
+        });
+      });
+
+      document.getElementById("copyOutputBtn").addEventListener("click", function () {
+        var text = document.getElementById("setupOutput").value;
+        if (!text) return;
+        navigator.clipboard.writeText(text).then(function () {
+          setStatus(document.getElementById("setupStatus"), "ok", "Copié ! Collez ce bloc dans assets/config.js puis commitez/pushez.");
+        }).catch(function () {
+          document.getElementById("setupOutput").select();
+        });
+      });
+    })();
+  </script>
 </body>
 </html>
