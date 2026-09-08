@@ -36,8 +36,12 @@ Tout se passe sur `index.html`, la page publique :
 1. Cliquez sur **🔒 Se connecter** (en haut à droite) et entrez le mot de passe éditeur.
 2. Une fois connecté : chaque catégorie affiche une tuile **"+ Ajouter une ressource"** à la fin de sa grille, et chaque carte affiche des icônes ✏️ (modifier) / 🗑️ (supprimer) au survol. Un bouton **"+ Catégorie"** apparaît aussi dans la barre de filtres, et chaque titre de catégorie a ses propres icônes modifier/supprimer.
 3. Dans le formulaire d'ajout d'une ressource, deux façons d'ajouter le contenu :
-   - **Un lien** : collez l'URL, cliquez sur **🔍 Aperçu** (récupère automatiquement titre/description/image via une API publique de prévisualisation).
-   - **Un fichier** (PDF, image, ZIP, document...) : utilisez le champ **"Ou importer un fichier"**. Le fichier est envoyé directement dans le dépôt GitHub (dossier `files/`, 20 Mo max) dès que vous validez le formulaire, et devient le lien de la ressource — une icône adaptée au type de fichier (📄 PDF, 🗜️ ZIP, 🖼️ image...) s'affiche sur la carte.
+   - **Un lien** : collez l'URL — l'aperçu (titre/description/image réelle du site) se récupère automatiquement dès que vous quittez le champ, ou en cliquant sur **🔍 Aperçu**.
+   - **Un fichier** (PDF, image, ZIP, document...) : utilisez le champ **"Ou importer un fichier"**. Le fichier est envoyé directement dans le dépôt GitHub (dossier `files/`, 20 Mo max) dès que vous validez le formulaire, et devient le lien de la ressource :
+     - une **image** est affichée telle quelle comme aperçu de la carte ;
+     - un **PDF** génère automatiquement une vraie miniature de sa première page (via pdf.js) ;
+     - les autres types (ZIP, Word, Excel...) affichent une icône adaptée (🗜️ 📝 📊...).
+     Sur la page publique, cliquer sur une ressource-fichier le **télécharge** directement (au lieu d'ouvrir un nouvel onglet comme pour un lien classique).
    Choisissez la catégorie puis validez.
 4. Une fois vos modifications faites, cliquez sur **Publier** (bandeau en bas de l'écran) : cela crée un commit qui met à jour `data/data.json`. Le site se met à jour pour tout le monde en quelques secondes.
 

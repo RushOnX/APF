@@ -338,6 +338,19 @@ main {
 
 .resource-preview .fallback-icon img { width: 28px; height: 28px; }
 
+.download-badge {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(20, 22, 40, 0.72);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: 999px;
+  backdrop-filter: blur(2px);
+}
+
 .resource-body {
   padding: 15px 17px 17px;
   display: flex;

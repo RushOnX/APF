@@ -72,6 +72,12 @@
   }
   function fileEmoji(url) { return FILE_ICONS[fileExt(url)] || "📁"; }
 
+  function downloadNameFor(r) {
+    var ext = fileExt(r.url);
+    var base = (r.title || "fichier").replace(/[\\/:*?"<>|]+/g, "").trim() || "fichier";
+    return ext ? base + "." + ext : base;
+  }
+
   function catColor(categoryId) {
     var idx = state.categories.findIndex(function (c) { return c.id === categoryId; });
     return CAT_COLORS[Math.max(0, idx) % CAT_COLORS.length];
@@ -128,7 +134,7 @@
       "</div>";
 
     var inner = editActions +
-      '<div class="resource-preview">' + img + "</div>" +
+      '<div class="resource-preview">' + img + (isFile ? '<span class="download-badge">⬇ Télécharger</span>' : "") + "</div>" +
       '<div class="resource-body">' +
       (domain ? '<span class="domain">' + escapeHtml(domain) + "</span>" : "") +
       "<h3>" + escapeHtml(r.title) + "</h3>" +
@@ -136,6 +142,9 @@
       (!hasLink ? '<span class="missing-link-badge">Lien à ajouter</span>' : "") +
       "</div>";
 
+    if (isFile) {
+      return '<a class="resource-card" href="' + escapeHtml(r.url) + '" download="' + escapeHtml(downloadNameFor(r)) + '">' + inner + "</a>";
+    }
     if (hasLink) {
       return '<a class="resource-card" href="' + escapeHtml(r.url) + '" target="_blank" rel="noopener noreferrer">' + inner + "</a>";
     }
@@ -248,37 +257,77 @@
 
   var MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 Mo
 
-  function uploadFile(file, onProgress) {
+  function blobToBase64(blob) {
     return new Promise(function (resolve, reject) {
-      if (file.size > MAX_FILE_SIZE) {
-        reject(new Error("Fichier trop volumineux (max 20 Mo)."));
-        return;
-      }
       var reader = new FileReader();
       reader.onerror = function () { reject(new Error("Lecture du fichier impossible.")); };
-      reader.onload = function () {
-        var base64 = String(reader.result).split(",")[1] || "";
-        var extMatch = /\.[a-z0-9]+$/i.exec(file.name);
-        var ext = extMatch ? extMatch[0] : "";
-        var base = slugify(file.name.replace(/\.[a-z0-9]+$/i, ""));
-        var path = "files/" + Date.now().toString(36) + "-" + base + ext;
-        if (onProgress) onProgress();
-        fetch(contentsUrl(path), {
-          method: "PUT",
-          headers: Object.assign({ "Content-Type": "application/json" }, ghHeaders()),
-          body: JSON.stringify({ message: "Ajout du fichier " + file.name, content: base64, branch: cfg.branch }),
-        })
-          .then(function (res) {
-            if (!res.ok) return res.json().then(function (e) { throw new Error(e.message || ("Erreur GitHub API (" + res.status + ")")); });
-            return res.json();
-          })
-          .then(function (json) {
-            resolve({ path: json.content.path, isImage: file.type.indexOf("image/") === 0, name: file.name });
-          })
-          .catch(reject);
-      };
-      reader.readAsDataURL(file);
+      reader.onload = function () { resolve(String(reader.result).split(",")[1] || ""); };
+      reader.readAsDataURL(blob);
     });
+  }
+
+  function putFile(path, base64, message) {
+    return fetch(contentsUrl(path), {
+      method: "PUT",
+      headers: Object.assign({ "Content-Type": "application/json" }, ghHeaders()),
+      body: JSON.stringify({ message: message, content: base64, branch: cfg.branch }),
+    }).then(function (res) {
+      if (!res.ok) return res.json().then(function (e) { throw new Error(e.message || ("Erreur GitHub API (" + res.status + ")")); });
+      return res.json();
+    });
+  }
+
+  function isPdfFile(file) { return file.type === "application/pdf" || /\.pdf$/i.test(file.name); }
+
+  function renderPdfThumbnail(file) {
+    if (!window.pdfjsLib) return Promise.reject(new Error("pdf.js indisponible"));
+    return file.arrayBuffer()
+      .then(function (buf) { return window.pdfjsLib.getDocument({ data: buf }).promise; })
+      .then(function (pdf) { return pdf.getPage(1); })
+      .then(function (page) {
+        var baseViewport = page.getViewport({ scale: 1 });
+        var scale = 480 / baseViewport.width;
+        var viewport = page.getViewport({ scale: scale });
+        var canvas = document.createElement("canvas");
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        return page.render({ canvasContext: canvas.getContext("2d"), viewport: viewport }).promise.then(function () {
+          return new Promise(function (resolve, reject) {
+            canvas.toBlob(function (blob) { blob ? resolve(blob) : reject(new Error("canvas vide")); }, "image/png");
+          });
+        });
+      });
+  }
+
+  function uploadFile(file, onStage) {
+    if (file.size > MAX_FILE_SIZE) return Promise.reject(new Error("Fichier trop volumineux (max 20 Mo)."));
+
+    var extMatch = /\.[a-z0-9]+$/i.exec(file.name);
+    var ext = extMatch ? extMatch[0] : "";
+    var base = slugify(file.name.replace(/\.[a-z0-9]+$/i, ""));
+    var stamp = Date.now().toString(36);
+    var path = "files/" + stamp + "-" + base + ext;
+
+    if (onStage) onStage("Import du fichier en cours…");
+
+    return blobToBase64(file)
+      .then(function (base64) { return putFile(path, base64, "Ajout du fichier " + file.name); })
+      .then(function (json) {
+        var result = { path: json.content.path, name: file.name, image: "" };
+        if (file.type.indexOf("image/") === 0) {
+          result.image = result.path;
+          return result;
+        }
+        if (isPdfFile(file)) {
+          if (onStage) onStage("Génération de l'aperçu du PDF…");
+          return renderPdfThumbnail(file)
+            .then(blobToBase64)
+            .then(function (thumbBase64) { return putFile("files/" + stamp + "-" + base + "-apercu.png", thumbBase64, "Aperçu du fichier " + file.name); })
+            .then(function (thumbJson) { result.image = thumbJson.content.path; return result; })
+            .catch(function () { return result; }); // aperçu PDF best-effort : on garde le fichier même si ça échoue
+        }
+        return result;
+      });
   }
 
   function loadForEditing() {
@@ -442,6 +491,7 @@
   function openResourceModal(id, presetCategoryId) {
     state.editingResourceId = id;
     state.lastPreview = null;
+    state.lastPreviewUrl = null;
     var r = id ? state.resources.find(function (x) { return x.id === id; }) : null;
     fillCategorySelect(r ? r.categoryId : presetCategoryId);
     var isFileBacked = !!(r && r.url && isLocalFile(r.url));
@@ -460,6 +510,7 @@
     }
     if (r && r.image) {
       state.lastPreview = { image: r.image };
+      state.lastPreviewUrl = r.url;
       showPreviewBox({ title: r.title, description: r.description, image: r.image });
     }
     openModal("resourceBackdrop");
@@ -497,12 +548,11 @@
 
     if (file) {
       submitBtn.disabled = true;
-      setStatus(fileStatusEl, "info", "Import du fichier en cours…");
-      uploadFile(file)
+      uploadFile(file, function (stage) { setStatus(fileStatusEl, "info", stage); })
         .then(function (result) {
           clearStatus(fileStatusEl);
           submitBtn.disabled = false;
-          finish(result.path, result.isImage ? result.path : "");
+          finish(result.path, result.image || "");
         })
         .catch(function (err) {
           submitBtn.disabled = false;
@@ -546,6 +596,7 @@
     var url = $("resUrl").value.trim();
     var el = $("previewStatus");
     if (!url) { setStatus(el, "err", "Renseignez d'abord un lien."); return; }
+    state.lastPreviewUrl = url;
     setStatus(el, "info", "Récupération de l'aperçu…");
     fetch("https://api.microlink.io/?url=" + encodeURIComponent(url) + "&meta=true")
       .then(function (res) { return res.json(); })
@@ -591,6 +642,10 @@
     $("resForm").addEventListener("submit", submitResourceForm);
     $("resDeleteBtn").addEventListener("click", deleteResourceFromModal);
     $("fetchPreviewBtn").addEventListener("click", fetchPreview);
+    $("resUrl").addEventListener("blur", function () {
+      var url = $("resUrl").value.trim();
+      if (url && url !== state.lastPreviewUrl && !$("resFile").files[0]) fetchPreview();
+    });
     $("resFile").addEventListener("change", function () {
       var file = $("resFile").files[0];
       if (!file) { clearStatus($("fileStatus")); return; }
