@@ -1,16 +1,52 @@
 {
   "version": 1,
-  "updatedAt": "2026-09-07T00:00:00.000Z",
+  "updatedAt": "2026-09-08T07:34:19.056Z",
   "categories": [
-    { "id": "jeux", "name": "Jeux de sensibilisation", "icon": "🎮" },
-    { "id": "clavier-souris", "name": "Clavier & Souris", "icon": "⌨️" },
-    { "id": "cybersecurite", "name": "Cybersécurité & Vie privée", "icon": "🔒" },
-    { "id": "intelligence-artificielle", "name": "Intelligence Artificielle", "icon": "🤖" },
-    { "id": "reseaux-sociaux", "name": "Réseaux sociaux", "icon": "📱" },
-    { "id": "outils-pedagogiques", "name": "Outils pédagogiques", "icon": "🎓" },
-    { "id": "accessibilite", "name": "Accessibilité & Handicap", "icon": "♿" },
-    { "id": "seniors", "name": "Seniors", "icon": "👴" },
-    { "id": "autres", "name": "Autres ressources", "icon": "📎" }
+    {
+      "id": "jeux",
+      "name": "Jeux de sensibilisation",
+      "icon": "🎮"
+    },
+    {
+      "id": "clavier-souris",
+      "name": "Clavier & Souris",
+      "icon": "⌨️"
+    },
+    {
+      "id": "cybersecurite",
+      "name": "Cybersécurité & Vie privée",
+      "icon": "🔒"
+    },
+    {
+      "id": "intelligence-artificielle",
+      "name": "Intelligence Artificielle",
+      "icon": "🤖"
+    },
+    {
+      "id": "reseaux-sociaux",
+      "name": "Réseaux sociaux",
+      "icon": "📱"
+    },
+    {
+      "id": "outils-pedagogiques",
+      "name": "Outils pédagogiques",
+      "icon": "🎓"
+    },
+    {
+      "id": "accessibilite",
+      "name": "Accessibilité & Handicap",
+      "icon": "♿"
+    },
+    {
+      "id": "seniors",
+      "name": "Seniors",
+      "icon": "👴"
+    },
+    {
+      "id": "autres",
+      "name": "Autres ressources",
+      "icon": "📎"
+    }
   ],
   "resources": [
     {
@@ -138,6 +174,15 @@
       "categoryId": "autres",
       "image": "",
       "addedAt": "2026-09-07T00:00:00.000Z"
+    },
+    {
+      "id": "jeu-ia",
+      "title": "Jeu IA",
+      "url": "",
+      "description": "Si vous voulez des jeux IA pour vos activités",
+      "categoryId": "jeux",
+      "image": "",
+      "addedAt": "2026-09-08T07:34:04.699Z"
     }
   ]
 }
