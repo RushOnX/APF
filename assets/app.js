@@ -56,6 +56,22 @@
     return d ? "https://www.google.com/s2/favicons?domain=" + encodeURIComponent(d) + "&sz=64" : "";
   }
 
+  function isLocalFile(url) { return !!url && !/^https?:\/\//i.test(url); }
+
+  var FILE_ICONS = {
+    pdf: "📄", doc: "📝", docx: "📝", odt: "📝", txt: "📃",
+    xls: "📊", xlsx: "📊", csv: "📊", ods: "📊",
+    ppt: "📽️", pptx: "📽️", odp: "📽️",
+    zip: "🗜️", rar: "🗜️", "7z": "🗜️", tar: "🗜️", gz: "🗜️",
+    png: "🖼️", jpg: "🖼️", jpeg: "🖼️", gif: "🖼️", svg: "🖼️", webp: "🖼️",
+    mp4: "🎬", mov: "🎬", avi: "🎬", mp3: "🎵", wav: "🎵",
+  };
+  function fileExt(url) {
+    var m = /\.([a-z0-9]+)$/i.exec((url || "").split(/[?#]/)[0]);
+    return m ? m[1].toLowerCase() : "";
+  }
+  function fileEmoji(url) { return FILE_ICONS[fileExt(url)] || "📁"; }
+
   function catColor(categoryId) {
     var idx = state.categories.findIndex(function (c) { return c.id === categoryId; });
     return CAT_COLORS[Math.max(0, idx) % CAT_COLORS.length];
@@ -96,12 +112,15 @@
 
   function cardHtml(r) {
     var hasLink = !!(r.url && r.url.trim());
-    var domain = hasLink ? domainOf(r.url) : "";
+    var isFile = hasLink && isLocalFile(r.url);
+    var domain = hasLink && !isFile ? domainOf(r.url) : (isFile ? "Fichier · " + (fileExt(r.url).toUpperCase() || "?") : "");
     var img = r.image
       ? '<img class="og-image" src="' + escapeHtml(r.image) + '" alt="" loading="lazy" onerror="this.parentElement.innerHTML=\'\'">'
-      : (hasLink
-          ? '<span class="fallback-icon"><img src="' + faviconUrl(r.url) + '" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement(\'span\'),{textContent:\'🔗\'}))"></span>'
-          : '<span class="fallback-icon">🔗</span>');
+      : (isFile
+          ? '<span class="fallback-icon">' + fileEmoji(r.url) + "</span>"
+          : (hasLink
+              ? '<span class="fallback-icon"><img src="' + faviconUrl(r.url) + '" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement(\'span\'),{textContent:\'🔗\'}))"></span>'
+              : '<span class="fallback-icon">🔗</span>'));
 
     var editActions = '<div class="card-edit-actions">' +
       '<button data-edit-res="' + r.id + '" title="Modifier">✏️</button>' +
@@ -219,11 +238,47 @@
       });
   }
 
-  function apiUrl() {
-    return "https://api.github.com/repos/" + cfg.owner + "/" + cfg.repo + "/contents/" + cfg.dataPath;
+  function contentsUrl(path) {
+    return "https://api.github.com/repos/" + cfg.owner + "/" + cfg.repo + "/contents/" + path;
   }
+  function apiUrl() { return contentsUrl(cfg.dataPath); }
   function ghHeaders() {
     return { Accept: "application/vnd.github+json", Authorization: "Bearer " + sessionToken };
+  }
+
+  var MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 Mo
+
+  function uploadFile(file, onProgress) {
+    return new Promise(function (resolve, reject) {
+      if (file.size > MAX_FILE_SIZE) {
+        reject(new Error("Fichier trop volumineux (max 20 Mo)."));
+        return;
+      }
+      var reader = new FileReader();
+      reader.onerror = function () { reject(new Error("Lecture du fichier impossible.")); };
+      reader.onload = function () {
+        var base64 = String(reader.result).split(",")[1] || "";
+        var extMatch = /\.[a-z0-9]+$/i.exec(file.name);
+        var ext = extMatch ? extMatch[0] : "";
+        var base = slugify(file.name.replace(/\.[a-z0-9]+$/i, ""));
+        var path = "files/" + Date.now().toString(36) + "-" + base + ext;
+        if (onProgress) onProgress();
+        fetch(contentsUrl(path), {
+          method: "PUT",
+          headers: Object.assign({ "Content-Type": "application/json" }, ghHeaders()),
+          body: JSON.stringify({ message: "Ajout du fichier " + file.name, content: base64, branch: cfg.branch }),
+        })
+          .then(function (res) {
+            if (!res.ok) return res.json().then(function (e) { throw new Error(e.message || ("Erreur GitHub API (" + res.status + ")")); });
+            return res.json();
+          })
+          .then(function (json) {
+            resolve({ path: json.content.path, isImage: file.type.indexOf("image/") === 0, name: file.name });
+          })
+          .catch(reject);
+      };
+      reader.readAsDataURL(file);
+    });
   }
 
   function loadForEditing() {
@@ -397,6 +452,11 @@
     $("resDeleteBtn").style.display = r ? "inline-flex" : "none";
     $("previewBox").style.display = "none";
     clearStatus($("previewStatus"));
+    $("resFile").value = "";
+    clearStatus($("fileStatus"));
+    if (r && r.url && isLocalFile(r.url)) {
+      setStatus($("fileStatus"), "info", "Fichier actuel : " + r.url.replace(/^files\//, ""));
+    }
     if (r && r.image) {
       state.lastPreview = { image: r.image };
       showPreviewBox({ title: r.title, description: r.description, image: r.image });
@@ -408,26 +468,49 @@
   function submitResourceForm(e) {
     e.preventDefault();
     var title = $("resTitle").value.trim();
-    var url = $("resUrl").value.trim();
     var description = $("resDescription").value.trim();
     var categoryId = $("resCategory").value;
+    var file = $("resFile").files[0];
     if (!title) return;
 
-    if (state.editingResourceId) {
-      var r = state.resources.find(function (x) { return x.id === state.editingResourceId; });
-      r.title = title; r.url = url; r.description = description; r.categoryId = categoryId;
-      if (state.lastPreview && state.lastPreview.image) r.image = state.lastPreview.image;
-    } else {
-      var ids = state.resources.map(function (x) { return x.id; });
-      state.resources.push({
-        id: uniqueId(slugify(title), ids),
-        title: title, url: url, description: description, categoryId: categoryId,
-        image: (state.lastPreview && state.lastPreview.image) || "",
-        addedAt: new Date().toISOString(),
-      });
+    var fileStatusEl = $("fileStatus");
+    var submitBtn = $("resSubmitBtn");
+    var finish = function (url, imageOverride) {
+      if (state.editingResourceId) {
+        var r = state.resources.find(function (x) { return x.id === state.editingResourceId; });
+        r.title = title; r.url = url; r.description = description; r.categoryId = categoryId;
+        if (imageOverride !== undefined) r.image = imageOverride;
+        else if (state.lastPreview && state.lastPreview.image) r.image = state.lastPreview.image;
+      } else {
+        var ids = state.resources.map(function (x) { return x.id; });
+        state.resources.push({
+          id: uniqueId(slugify(title), ids),
+          title: title, url: url, description: description, categoryId: categoryId,
+          image: imageOverride !== undefined ? imageOverride : ((state.lastPreview && state.lastPreview.image) || ""),
+          addedAt: new Date().toISOString(),
+        });
+      }
+      closeModal("resourceBackdrop");
+      render();
+    };
+
+    if (file) {
+      submitBtn.disabled = true;
+      setStatus(fileStatusEl, "info", "Import du fichier en cours…");
+      uploadFile(file)
+        .then(function (result) {
+          clearStatus(fileStatusEl);
+          submitBtn.disabled = false;
+          finish(result.path, result.isImage ? result.path : "");
+        })
+        .catch(function (err) {
+          submitBtn.disabled = false;
+          setStatus(fileStatusEl, "err", "⚠️ Échec de l'import : " + err.message);
+        });
+      return;
     }
-    closeModal("resourceBackdrop");
-    render();
+
+    finish($("resUrl").value.trim());
   }
 
   function deleteResourceFromModal() {
@@ -502,6 +585,12 @@
     $("resForm").addEventListener("submit", submitResourceForm);
     $("resDeleteBtn").addEventListener("click", deleteResourceFromModal);
     $("fetchPreviewBtn").addEventListener("click", fetchPreview);
+    $("resFile").addEventListener("change", function () {
+      var file = $("resFile").files[0];
+      if (!file) { clearStatus($("fileStatus")); return; }
+      if (!$("resTitle").value.trim()) $("resTitle").value = file.name.replace(/\.[a-z0-9]+$/i, "");
+      setStatus($("fileStatus"), "info", "Sélectionné : " + file.name + " (" + (file.size / 1024 / 1024).toFixed(1) + " Mo) — sera importé à la validation.");
+    });
 
     $("saveBtn").addEventListener("click", saveData);
     $("discardBtn").addEventListener("click", function () {

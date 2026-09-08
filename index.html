@@ -100,6 +100,12 @@
           </div>
           <small>Optionnel si vous n'avez pas encore le lien — la ressource sera marquée "lien à ajouter".</small>
         </div>
+        <div class="field">
+          <label>Ou importer un fichier (PDF, image, ZIP, document...)</label>
+          <input id="resFile" type="file" />
+          <small>Le fichier est hébergé directement dans le dépôt GitHub (20 Mo max) et remplace le lien ci-dessus s'il est renseigné.</small>
+        </div>
+        <div class="status-msg" id="fileStatus"></div>
         <div class="status-msg" id="previewStatus"></div>
         <div class="preview-box" id="previewBox" style="display:none;">
           <img id="previewImg" src="" alt="" />

@@ -35,10 +35,15 @@ Tout se passe sur `index.html`, la page publique :
 
 1. Cliquez sur **🔒 Se connecter** (en haut à droite) et entrez le mot de passe éditeur.
 2. Une fois connecté : chaque catégorie affiche une tuile **"+ Ajouter une ressource"** à la fin de sa grille, et chaque carte affiche des icônes ✏️ (modifier) / 🗑️ (supprimer) au survol. Un bouton **"+ Catégorie"** apparaît aussi dans la barre de filtres, et chaque titre de catégorie a ses propres icônes modifier/supprimer.
-3. Dans le formulaire d'ajout d'une ressource : collez le lien, cliquez sur **🔍 Aperçu** (récupère automatiquement titre/description/image via une API publique de prévisualisation), ajustez si besoin, choisissez la catégorie, validez.
+3. Dans le formulaire d'ajout d'une ressource, deux façons d'ajouter le contenu :
+   - **Un lien** : collez l'URL, cliquez sur **🔍 Aperçu** (récupère automatiquement titre/description/image via une API publique de prévisualisation).
+   - **Un fichier** (PDF, image, ZIP, document...) : utilisez le champ **"Ou importer un fichier"**. Le fichier est envoyé directement dans le dépôt GitHub (dossier `files/`, 20 Mo max) dès que vous validez le formulaire, et devient le lien de la ressource — une icône adaptée au type de fichier (📄 PDF, 🗜️ ZIP, 🖼️ image...) s'affiche sur la carte.
+   Choisissez la catégorie puis validez.
 4. Une fois vos modifications faites, cliquez sur **Publier** (bandeau en bas de l'écran) : cela crée un commit qui met à jour `data/data.json`. Le site se met à jour pour tout le monde en quelques secondes.
 
 Sans connexion, la page reste en lecture seule et consultable par tous, sans rien à saisir.
+
+> Note : supprimer une ressource qui pointait vers un fichier importé retire l'entrée de `data/data.json` mais ne supprime pas le fichier lui-même du dossier `files/` — à faire manuellement sur GitHub si besoin de libérer de la place.
 
 ## 4. Structure du projet
 
