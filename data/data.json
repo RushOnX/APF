@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-09-08T08:06:32.010Z",
+  "updatedAt": "2026-09-08T08:07:34.394Z",
   "categories": [
     {
       "id": "jeux",
@@ -201,6 +201,15 @@
       "categoryId": "jeux",
       "image": "",
       "addedAt": "2026-09-08T07:42:37.034Z"
+    },
+    {
+      "id": "odyssee-du-numerique",
+      "title": "Odyssée du numérique",
+      "url": "https://fr.zone-secure.net/170194/2403849/?token=F79C5E4679D9C88522DEEB854547891D#page=4",
+      "description": "",
+      "categoryId": "jeux",
+      "image": "http://fr.zone-secure.net/170194/2403849/publication/contents/thumb.jpg",
+      "addedAt": "2026-09-08T08:07:32.810Z"
     }
   ]
 }
