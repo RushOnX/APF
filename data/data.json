@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-09-08T07:42:42.638Z",
+  "updatedAt": "2026-09-08T08:06:32.010Z",
   "categories": [
     {
       "id": "jeux",
@@ -178,10 +178,10 @@
     {
       "id": "jeu-ia",
       "title": "Jeu IA",
-      "url": "",
+      "url": "https://drive.google.com/file/d/1LpybZWwzLJDryC3fDG7mbJi9Hjh9ltY-/view?usp=drive_link",
       "description": "Si vous voulez des jeux IA pour vos activités",
       "categoryId": "intelligence-artificielle",
-      "image": "",
+      "image": "https://www.google.com/favicon.ico",
       "addedAt": "2026-09-08T07:34:04.699Z"
     },
     {
