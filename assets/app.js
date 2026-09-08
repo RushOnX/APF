@@ -255,7 +255,7 @@
     return { Accept: "application/vnd.github+json", Authorization: "Bearer " + sessionToken };
   }
 
-  var MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 Mo
+  var MAX_FILE_SIZE = 90 * 1024 * 1024; // 90 Mo (limite pratique de l'API Git de GitHub)
 
   function blobToBase64(blob) {
     return new Promise(function (resolve, reject) {
@@ -266,15 +266,45 @@
     });
   }
 
-  function putFile(path, base64, message) {
-    return fetch(contentsUrl(path), {
-      method: "PUT",
-      headers: Object.assign({ "Content-Type": "application/json" }, ghHeaders()),
-      body: JSON.stringify({ message: message, content: base64, branch: cfg.branch }),
-    }).then(function (res) {
+  function ghApi(path, opts) {
+    return fetch("https://api.github.com/repos/" + cfg.owner + "/" + cfg.repo + path, Object.assign({
+      headers: Object.assign({ Accept: "application/vnd.github+json" }, ghHeaders(), (opts && opts.body) ? { "Content-Type": "application/json" } : {}),
+    }, opts)).then(function (res) {
       if (!res.ok) return res.json().then(function (e) { throw new Error(e.message || ("Erreur GitHub API (" + res.status + ")")); });
       return res.json();
     });
+  }
+
+  // Envoie un ou plusieurs fichiers binaires dans un seul commit via l'API Git de GitHub
+  // (blobs + tree + commit), qui supporte des fichiers bien plus volumineux que l'API
+  // Contents utilisée pour data.json (limitée en pratique à quelques Mo).
+  function commitFiles(entries, message) {
+    var branchRef = "heads/" + cfg.branch;
+    return ghApi("/git/ref/" + branchRef, {})
+      .then(function (refJson) {
+        var parentSha = refJson.object.sha;
+        return ghApi("/git/commits/" + parentSha, {}).then(function (commitJson) {
+          return { parentSha: parentSha, baseTreeSha: commitJson.tree.sha };
+        });
+      })
+      .then(function (ctx) {
+        return Promise.all(entries.map(function (e) {
+          return ghApi("/git/blobs", { method: "POST", body: JSON.stringify({ content: e.base64, encoding: "base64" }) })
+            .then(function (blobJson) { return { path: e.path, sha: blobJson.sha }; });
+        })).then(function (blobs) { return { ctx: ctx, blobs: blobs }; });
+      })
+      .then(function (r) {
+        var treeEntries = r.blobs.map(function (b) { return { path: b.path, mode: "100644", type: "blob", sha: b.sha }; });
+        return ghApi("/git/trees", { method: "POST", body: JSON.stringify({ base_tree: r.ctx.baseTreeSha, tree: treeEntries }) })
+          .then(function (treeJson) { return { treeSha: treeJson.sha, parentSha: r.ctx.parentSha }; });
+      })
+      .then(function (r) {
+        return ghApi("/git/commits", { method: "POST", body: JSON.stringify({ message: message, tree: r.treeSha, parents: [r.parentSha] }) });
+      })
+      .then(function (commitJson) {
+        return ghApi("/git/refs/" + branchRef, { method: "PATCH", body: JSON.stringify({ sha: commitJson.sha }) })
+          .then(function () { return commitJson; });
+      });
   }
 
   function isPdfFile(file) { return file.type === "application/pdf" || /\.pdf$/i.test(file.name); }
@@ -300,34 +330,47 @@
   }
 
   function uploadFile(file, onStage) {
-    if (file.size > MAX_FILE_SIZE) return Promise.reject(new Error("Fichier trop volumineux (max 20 Mo)."));
+    if (file.size > MAX_FILE_SIZE) {
+      return Promise.reject(new Error(
+        "Fichier trop volumineux : " + (file.size / 1024 / 1024).toFixed(1) + " Mo (max " + (MAX_FILE_SIZE / 1024 / 1024) + " Mo, limite de GitHub). " +
+        "Déposez-le sur Google Drive / WeTransfer / YouTube et collez le lien dans le champ « Lien (URL) » à la place."
+      ));
+    }
 
     var extMatch = /\.[a-z0-9]+$/i.exec(file.name);
     var ext = extMatch ? extMatch[0] : "";
     var base = slugify(file.name.replace(/\.[a-z0-9]+$/i, ""));
     var stamp = Date.now().toString(36);
     var path = "files/" + stamp + "-" + base + ext;
+    var result = { path: path, name: file.name, image: "" };
 
     if (onStage) onStage("Import du fichier en cours…");
 
-    return blobToBase64(file)
-      .then(function (base64) { return putFile(path, base64, "Ajout du fichier " + file.name); })
-      .then(function (json) {
-        var result = { path: json.content.path, name: file.name, image: "" };
-        if (file.type.indexOf("image/") === 0) {
-          result.image = result.path;
+    return blobToBase64(file).then(function (base64) {
+      if (file.type.indexOf("image/") === 0) {
+        return commitFiles([{ path: path, base64: base64 }], "Ajout du fichier " + file.name).then(function () {
+          result.image = path;
           return result;
-        }
-        if (isPdfFile(file)) {
-          if (onStage) onStage("Génération de l'aperçu du PDF…");
-          return renderPdfThumbnail(file)
-            .then(blobToBase64)
-            .then(function (thumbBase64) { return putFile("files/" + stamp + "-" + base + "-apercu.png", thumbBase64, "Aperçu du fichier " + file.name); })
-            .then(function (thumbJson) { result.image = thumbJson.content.path; return result; })
-            .catch(function () { return result; }); // aperçu PDF best-effort : on garde le fichier même si ça échoue
-        }
-        return result;
-      });
+        });
+      }
+      if (isPdfFile(file)) {
+        if (onStage) onStage("Génération de l'aperçu du PDF…");
+        return renderPdfThumbnail(file)
+          .then(blobToBase64)
+          .then(function (thumbBase64) {
+            var thumbPath = "files/" + stamp + "-" + base + "-apercu.png";
+            return commitFiles(
+              [{ path: path, base64: base64 }, { path: thumbPath, base64: thumbBase64 }],
+              "Ajout du fichier " + file.name
+            ).then(function () { result.image = thumbPath; return result; });
+          })
+          .catch(function () {
+            // aperçu PDF best-effort : si la génération échoue, on importe quand même le fichier seul
+            return commitFiles([{ path: path, base64: base64 }], "Ajout du fichier " + file.name).then(function () { return result; });
+          });
+      }
+      return commitFiles([{ path: path, base64: base64 }], "Ajout du fichier " + file.name).then(function () { return result; });
+    });
   }
 
   function loadForEditing() {
