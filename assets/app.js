@@ -640,13 +640,15 @@
     var el = $("previewStatus");
     if (!url) { setStatus(el, "err", "Renseignez d'abord un lien."); return; }
     state.lastPreviewUrl = url;
-    setStatus(el, "info", "Récupération de l'aperçu…");
-    fetch("https://api.microlink.io/?url=" + encodeURIComponent(url) + "&meta=true")
+    setStatus(el, "info", "Capture du site en cours…");
+    fetch("https://api.microlink.io/?url=" + encodeURIComponent(url) + "&meta=true&screenshot=true&viewport.width=1200&viewport.height=800")
       .then(function (res) { return res.json(); })
       .then(function (json) {
         if (json.status !== "success") throw new Error("aperçu indisponible");
         var d = json.data || {};
-        var image = (d.image && d.image.url) || (d.logo && d.logo.url) || "";
+        // On préfère une vraie capture d'écran du site (le rendu réel de la page),
+        // avec l'image og: puis le logo comme repli si la capture échoue.
+        var image = (d.screenshot && d.screenshot.url) || (d.image && d.image.url) || (d.logo && d.logo.url) || "";
         state.lastPreview = { image: image };
         if (!$("resTitle").value.trim() && d.title) $("resTitle").value = d.title;
         if (!$("resDescription").value.trim() && d.description) $("resDescription").value = d.description;
