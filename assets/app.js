@@ -444,8 +444,9 @@
     state.lastPreview = null;
     var r = id ? state.resources.find(function (x) { return x.id === id; }) : null;
     fillCategorySelect(r ? r.categoryId : presetCategoryId);
+    var isFileBacked = !!(r && r.url && isLocalFile(r.url));
     $("resModalTitle").textContent = r ? "Modifier la ressource" : "Ajouter une ressource";
-    $("resUrl").value = r ? (r.url || "") : "";
+    $("resUrl").value = r && !isFileBacked ? (r.url || "") : "";
     $("resTitle").value = r ? r.title : "";
     $("resDescription").value = r ? (r.description || "") : "";
     $("resSubmitBtn").textContent = r ? "Enregistrer" : "Ajouter";
@@ -454,8 +455,8 @@
     clearStatus($("previewStatus"));
     $("resFile").value = "";
     clearStatus($("fileStatus"));
-    if (r && r.url && isLocalFile(r.url)) {
-      setStatus($("fileStatus"), "info", "Fichier actuel : " + r.url.replace(/^files\//, ""));
+    if (isFileBacked) {
+      setStatus($("fileStatus"), "info", "📎 Fichier actuel : " + r.url.replace(/^files\/[a-z0-9]+-/i, "") + " — importez un autre fichier ci-dessus pour le remplacer.");
     }
     if (r && r.image) {
       state.lastPreview = { image: r.image };
@@ -510,7 +511,12 @@
       return;
     }
 
-    finish($("resUrl").value.trim());
+    var typedUrl = $("resUrl").value.trim();
+    if (!typedUrl && state.editingResourceId) {
+      var existing = state.resources.find(function (x) { return x.id === state.editingResourceId; });
+      if (existing && isLocalFile(existing.url)) typedUrl = existing.url; // conserve le fichier déjà importé
+    }
+    finish(typedUrl);
   }
 
   function deleteResourceFromModal() {
