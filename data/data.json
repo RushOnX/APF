@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-09-08T07:34:19.056Z",
+  "updatedAt": "2026-09-08T07:35:45.752Z",
   "categories": [
     {
       "id": "jeux",
@@ -180,7 +180,7 @@
       "title": "Jeu IA",
       "url": "",
       "description": "Si vous voulez des jeux IA pour vos activités",
-      "categoryId": "jeux",
+      "categoryId": "intelligence-artificielle",
       "image": "",
       "addedAt": "2026-09-08T07:34:04.699Z"
     }
