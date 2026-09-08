@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-09-08T07:35:45.752Z",
+  "updatedAt": "2026-09-08T07:41:36.223Z",
   "categories": [
     {
       "id": "jeux",
@@ -183,6 +183,15 @@
       "categoryId": "intelligence-artificielle",
       "image": "",
       "addedAt": "2026-09-08T07:34:04.699Z"
+    },
+    {
+      "id": "malette-cyber",
+      "title": "Malette Cyber",
+      "url": "https://www.cybermalveillance.gouv.fr/tous-nos-contenus/actualites/lancement-mallette-cyber-inclusion-numerique",
+      "description": "",
+      "categoryId": "cybersecurite",
+      "image": "",
+      "addedAt": "2026-09-08T07:41:33.273Z"
     }
   ]
 }
