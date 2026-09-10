@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-09-08T08:07:34.394Z",
+  "updatedAt": "2026-09-10T13:04:24.557Z",
   "categories": [
     {
       "id": "jeux",
@@ -210,6 +210,15 @@
       "categoryId": "jeux",
       "image": "http://fr.zone-secure.net/170194/2403849/publication/contents/thumb.jpg",
       "addedAt": "2026-09-08T08:07:32.810Z"
+    },
+    {
+      "id": "site-demo-sante-en-local",
+      "title": "Site Démo Santé (en local)",
+      "url": "files/mtvjgtz2-site-apf.zip",
+      "description": "Site démo, sur Ameli, mon espace santé, et l'app carte vitale.\nCrée par les soins de Enzo, dans le dossier vous trouverais le fichier à lire.pdf (important pour lancer le site en local).",
+      "categoryId": "autres",
+      "image": "",
+      "addedAt": "2026-09-10T13:04:11.412Z"
     }
   ]
 }
